@@ -93,7 +93,7 @@ public class TicTacToe
     {
         while (true)
         {
-            Console.WriteLine("Ваш ход (1-9):");
+            Console.WriteLine("Ходят Х");
             int move = ReadPlayerInput();
 
             if (IsValidMove(move))
@@ -108,18 +108,17 @@ public class TicTacToe
 
     private void ComputerMove()
     {
-        Console.WriteLine("Ход компьютера...");
+        Console.WriteLine("Ходят 0");
 
-        while (true)
+        int move = ReadPlayerInput();
+
+        if (IsValidMove(move))
         {
-            int move = random.Next(1, 10);
-
-            if (IsValidMove(move))
-            {
-                MakeMove(move);
-                return;
-            }
+            MakeMove(move);
+            return;
         }
+
+        Console.WriteLine("Некорректный ход. Попробуйте снова.");
     }
 
     private int ReadPlayerInput()
