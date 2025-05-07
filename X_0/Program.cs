@@ -1,159 +1,201 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Добрый день!");
-Console.WriteLine("Вы Человек, вы начинаете первым, сейчас вы X");
-Console.WriteLine($"Управление: {Environment.NewLine}7 8 9{Environment.NewLine}4 5 6{Environment.NewLine}1 2 3");
-char[,] pole= { {'-','-','-'},
-                {'-','-','-'},
-                {'-','-','-'}};
-char igrock = 'X';
-Console.WriteLine("Игра НАЧАЛАСЬ!!!");
-var maping = new Dictionary<int, (int, int)> { { 7, (0, 0) },{ 8, (0, 1) },{ 9,(0,2)},
-                                               { 4, (1, 0) },{ 5, (1, 1) },{ 6,(1,2)},
-                                               { 1, (2, 0) },{ 2, (2, 1) },{ 3,(2,2)}};
-var rand = new Random();
-X_0();
-void X_0()
-{   
-    begin:
-    Console.WriteLine(Environment.NewLine +  pole[0, 0] + ' ' + pole[0, 1] + ' ' + pole[0, 2] + Environment.NewLine + pole[1, 0] + ' ' + pole[1, 1] + ' ' + pole[1, 2] + Environment.NewLine +
-                        pole[2, 0] + ' ' + pole[2, 1] + ' ' + pole[2, 2]);
+﻿using System;
+using System.Collections.Generic;
 
-    if (igrock == 'X') 
+public class TicTacToe
+{
+    private char[,] board;
+    private char currentPlayer;
+    private readonly Dictionary<int, (int, int)> positionMap;
+    private readonly Random random;
+
+    public TicTacToe()
     {
+        board = new char[3, 3];
+        currentPlayer = 'X';
+        random = new Random();
 
+        positionMap = new Dictionary<int, (int, int)>
+        {
+            {7, (0, 0)}, {8, (0, 1)}, {9, (0, 2)},
+            {4, (1, 0)}, {5, (1, 1)}, {6, (1, 2)},
+            {1, (2, 0)}, {2, (2, 1)}, {3, (2, 2)}
+        };
+
+        InitializeBoard();
+    }
+
+    public void StartGame()
+    {
+        Console.WriteLine("Добрый день!");
+        Console.WriteLine("Вы Человек, вы начинаете первым, сейчас вы X");
+        PrintControls();
+        Console.WriteLine("Игра НАЧАЛАСЬ!!!");
 
         while (true)
         {
-            int hod = ReadKeyFromDebil();
-            if (ProvHoda(hod))
-            { break; }
-            else { Console.WriteLine("Нормально ходи и нормально все будет"); }
+            PrintBoard();
+
+            if (currentPlayer == 'X')
+            {
+                HumanMove();
+            }
+            else
+            {
+                ComputerMove();
+            }
+
+            if (CheckWin())
+            {
+                PrintBoard();
+                Console.WriteLine($"ПОБЕДИТЕЛЬ: {currentPlayer}");
+                Console.WriteLine("КОНЕЦ!");
+                return;
+            }
+
+            if (!HasEmptyCells())
+            {
+                PrintBoard();
+                Console.WriteLine("НИЧЬЯ!");
+                Console.WriteLine("КОНЕЦ!");
+                return;
+            }
+
+            SwitchPlayer();
         }
-        igrock = '0';
-        if (Pobeda() == true) {
-            Console.WriteLine(Environment.NewLine + pole[0, 0] + ' ' + pole[0, 1] + ' ' + pole[0, 2] + Environment.NewLine + pole[1, 0] + ' ' + pole[1, 1] + ' ' + pole[1, 2] + Environment.NewLine +
-                        pole[2, 0] + ' ' + pole[2, 1] + ' ' + pole[2, 2]); Console.WriteLine("КОнец!"); return; }
-        if (Continue()==false) { Console.WriteLine("КОнец!"); return; }
     }
 
-    Console.WriteLine(Environment.NewLine + pole[0, 0] + ' ' + pole[0, 1] + ' ' + pole[0, 2] + Environment.NewLine + pole[1, 0] + ' ' + pole[1, 1] + ' ' + pole[1, 2] + Environment.NewLine +
-                       pole[2, 0] + ' ' + pole[2, 1] + ' ' + pole[2, 2]);
-
-    if (igrock == '0')
+    private void InitializeBoard()
     {
-        
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                board[i, j] = '-';
+            }
+        }
+    }
+
+    private void PrintControls()
+    {
+        Console.WriteLine($"Управление: {Environment.NewLine}7 8 9{Environment.NewLine}4 5 6{Environment.NewLine}1 2 3");
+    }
+
+    private void PrintBoard()
+    {
+        Console.WriteLine();
+        Console.WriteLine($"{board[0, 0]} {board[0, 1]} {board[0, 2]}");
+        Console.WriteLine($"{board[1, 0]} {board[1, 1]} {board[1, 2]}");
+        Console.WriteLine($"{board[2, 0]} {board[2, 1]} {board[2, 2]}");
+        Console.WriteLine();
+    }
+
+    private void HumanMove()
+    {
         while (true)
         {
-            int bot = rand.Next(1, 9);
-            if (ProvHoda(bot))
-            { break; }
+            Console.WriteLine("Ваш ход (1-9):");
+            int move = ReadPlayerInput();
+
+            if (IsValidMove(move))
+            {
+                MakeMove(move);
+                return;
+            }
+
+            Console.WriteLine("Некорректный ход. Попробуйте снова.");
         }
-        igrock = 'X';
-        if (Pobeda() == true) {
-            Console.WriteLine(Environment.NewLine + pole[0, 0] + ' ' + pole[0, 1] + ' ' + pole[0, 2] + Environment.NewLine + pole[1, 0] + ' ' + pole[1, 1] + ' ' + pole[1, 2] + Environment.NewLine +
-                        pole[2, 0] + ' ' + pole[2, 1] + ' ' + pole[2, 2]); Console.WriteLine("КОнец!"); return; }
-        if (Continue() == false) { Console.WriteLine("КОнец!"); return; }
     }
-    goto begin;
-}
 
-bool ProvHoda(int hod)
-{   
-    var dildo = maping[hod];
-    if (pole[dildo.Item1,dildo.Item2] == '-')
+    private void ComputerMove()
     {
-        pole[dildo.Item1, dildo.Item2] = igrock;
-        return true;
-    }
-    return false;
-   
-}
+        Console.WriteLine("Ход компьютера...");
 
-//Читать цифру с ввода
-int ReadKeyFromDebil()
-{
-    while (true)
-    {
-        var readKey = Console.ReadKey(true).KeyChar;
-        if (char.IsDigit(readKey))
+        while (true)
         {
-            Console.WriteLine(readKey);
-            return (int)char.GetNumericValue(readKey);
+            int move = random.Next(1, 10);
+
+            if (IsValidMove(move))
+            {
+                MakeMove(move);
+                return;
+            }
         }
     }
-}
 
-//Проверка на победу, если победа, вернет true, иначе вернет false, при побуду напишет в консоль кто выйграл
-bool? Pobeda() 
-{
-    if ((pole[0, 0] == pole[0, 1]) && (pole[0, 1] == pole[0, 2]&& pole[0, 2] != '-'))
+    private int ReadPlayerInput()
     {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[0, 0]);
-        return true;
+        while (true)
+        {
+            char input = Console.ReadKey(true).KeyChar;
+            if (char.IsDigit(input))
+            {
+                Console.WriteLine(input);
+                return (int)char.GetNumericValue(input);
+            }
+        }
     }
-    else if ((pole[1, 0] == pole[1, 1]) && (pole[1, 1] == pole[1, 2] && pole[1, 2] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[1, 0]);
-        return true;
-    }
-    else if ((pole[2, 0] == pole[2, 1]) && (pole[2, 1] == pole[2, 2] && pole[2, 2] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[2, 0]);
-        return true;  
-    }
-    else if ((pole[0, 0] == pole[1, 1]) && (pole[1, 1] == pole[2, 2] && pole[2, 2] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[1, 1]);
-        return true;
-    }
-    else if ((pole[0, 2] == pole[1, 1]) && (pole[1, 1] == pole[2, 0] && pole[2, 0] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[1, 1]);
-        return true;
-    }
-    else if ((pole[0, 0] == pole[1, 0]) && (pole[1, 0] == pole[2, 0] && pole[2, 0] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[0, 0]);
-        return true;
-    }
-    else if ((pole[0, 1] == pole[1, 1]) && (pole[1, 1] == pole[2, 1] && pole[2, 1] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[1, 1]);
-        return true;
-    }
-    else if ((pole[0, 2] == pole[1, 2]) && (pole[1, 2] == pole[2, 2] && pole[2, 2] != '-'))
-    {
-        Console.WriteLine("ПОБЕДИЛИЛДА: " + pole[2, 2]);
-        return true;
-    }
-    return false;
-}
 
-//Если есть куда ходить, то true, если поле забито, то false
-bool? Continue()
-{
-    for (int i = 0; i < 3; i++) 
+    private bool IsValidMove(int position)
     {
+        if (!positionMap.TryGetValue(position, out var coordinates))
+            return false;
+
+        return board[coordinates.Item1, coordinates.Item2] == '-';
+    }
+
+    private void MakeMove(int position)
+    {
+        var (row, col) = positionMap[position];
+        board[row, col] = currentPlayer;
+    }
+
+    private bool CheckWin()
+    {
+        // Проверка горизонталей
+        for (int i = 0; i < 3; i++)
+        {
+            if (board[i, 0] != '-' && board[i, 0] == board[i, 1] && board[i, 1] == board[i, 2])
+                return true;
+        }
+
+        // Проверка вертикалей
         for (int j = 0; j < 3; j++)
         {
-            if (pole[i, j] == '-')
-            { return true; }
+            if (board[0, j] != '-' && board[0, j] == board[1, j] && board[1, j] == board[2, j])
+                return true;
         }
-    }
-    return false;
-}
 
-//Чистим поле меняя все символы на пробелы
-void PusroPole()
-{
-    for (int i = 0; i < 3; i++)
+        // Проверка диагоналей
+        if (board[0, 0] != '-' && board[0, 0] == board[1, 1] && board[1, 1] == board[2, 2])
+            return true;
+
+        if (board[0, 2] != '-' && board[0, 2] == board[1, 1] && board[1, 1] == board[2, 0])
+            return true;
+
+        return false;
+    }
+
+    private bool HasEmptyCells()
     {
-        for (int j = 0; j < 3; j++)
+        for (int i = 0; i < 3; i++)
         {
-            pole[i, j] = '-';
+            for (int j = 0; j < 3; j++)
+            {
+                if (board[i, j] == '-')
+                    return true;
+            }
         }
+        return false;
+    }
+
+    private void SwitchPlayer()
+    {
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+    }
+
+    public static void Main(string[] args)
+    {
+        TicTacToe game = new TicTacToe();
+        game.StartGame();
     }
 }
-
-
-
